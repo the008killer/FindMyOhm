@@ -1,7 +1,7 @@
 'use strict';
 
 // ── Constants ────────────────────────────────────────────────
-var API_URL       = 'http://localhost:3001/api/analyze';
+var API_URL       = '/api/analyze';
 var MAX_FILE_SIZE = 10 * 1024 * 1024;
 var ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
