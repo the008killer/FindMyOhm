@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FindMyOhm • Resistor Analyzer</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="header__inner">
+        <h1 class="header__logo">
+          FindMyOhm <i data-lucide="scan-eye" class="icon icon--logo"></i>
+        </h1>
+        <p class="header__tagline">AI-Powered Resistor Color Code Analyzer</p>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- ── Upload Section ───────────────────────────────────── -->
+      <section class="section upload-section">
+        <h2 class="section__title">
+          <i data-lucide="upload" class="icon icon--section"></i>
+          Upload Resistor Image
+        </h2>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone__icon">
+            <i data-lucide="image-plus" class="icon icon--upload"></i>
+          </div>
+          <p class="drop-zone__text">Drag & drop your image here</p>
+          <p class="drop-zone__subtext">or</p>
+          <label class="btn btn--outline" for="fileInput"> Browse File </label>
+          <input
+            type="file"
+            id="fileInput"
+            class="drop-zone__input"
+            accept="image/jpeg, image/png, image/webp"
+          />
+          <p class="drop-zone__hint">Supports: JPG, PNG, WEBP — Max 10MB</p>
+        </div>
+
+        <!-- Image Preview -->
+        <div class="preview-box" id="previewBox">
+          <div class="preview-box__header">
+            <span class="preview-box__label">Preview</span>
+            <button class="btn btn--ghost btn--sm" id="clearBtn">
+              <i data-lucide="x" class="icon icon--sm"></i> Clear
+            </button>
+          </div>
+          <div class="preview-box__image-wrap">
+            <img
+              id="previewImage"
+              class="preview-box__image"
+              src=""
+              alt="Uploaded resistor preview"
+            />
+          </div>
+          <div class="preview-box__meta" id="fileMeta"></div>
+        </div>
+
+        <!-- Analyze Button -->
+        <button class="btn btn--primary btn--lg" id="analyzeBtn" disabled>
+          <i data-lucide="cpu" class="icon icon--btn" id="analyzeBtnIcon"></i>
+          <span id="analyzeBtnText">Analyze Resistor</span>
+          <span id="analyzeBtnSpinner" class="spinner" hidden></span>
+        </button>
+      </section>
+
+      <!-- ── Result Section ────────────────────────────────────── -->
+      <section class="section result-section" id="resultSection">
+        <h2 class="section__title">Analysis Result</h2>
+
+        <!-- Result Card -->
+        <div class="result-card" id="resultCard">
+          <!-- Annotated Image -->
+          <div class="result-card__image-wrap">
+            <img
+              id="annotatedImage"
+              class="result-card__image"
+              src=""
+              alt="Annotated resistor"
+            />
+          </div>
+
+          <!-- Resistance Value -->
+          <div class="result-card__value-block">
+            <span class="result-card__label">
+              <i data-lucide="zap" class="icon icon--label"></i> Resistance
+            </span>
+            <span class="result-card__value" id="resistanceValue">—</span>
+          </div>
+
+          <!-- Tolerance -->
+          <div class="result-card__value-block">
+            <span class="result-card__label">
+              <i data-lucide="plus-minus" class="icon icon--label"></i>
+              Tolerance
+            </span>
+            <span class="result-card__value" id="toleranceValue">—</span>
+          </div>
+
+          <!-- Color Bands -->
+          <div class="bands-display" id="bandsDisplay">
+            <span class="result-card__label">
+              <i data-lucide="palette" class="icon icon--label"></i> Color Bands
+            </span>
+            <div class="bands-display__track" id="bandsTrack"></div>
+          </div>
+
+          <!-- Calculation Breakdown -->
+          <div class="calculation-block" id="calculationBlock">
+            <span class="result-card__label">
+              <i data-lucide="calculator" class="icon icon--label"></i>
+              Calculation
+            </span>
+            <p class="calculation-block__text" id="calculationText">—</p>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-card" id="errorCard">
+          <span class="error-card__icon">
+            <i data-lucide="alert-triangle" class="icon icon--error"></i>
+          </span>
+          <p class="error-card__message" id="errorMessage">
+            Something went wrong.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        <i data-lucide="github" class="icon icon--footer"></i>
+        FindMyOhm • Built with YOLOv8 + OpenCV + FastAPI
+      </p>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+    <script>
+      window.addEventListener("DOMContentLoaded", function () {
+        lucide.createIcons();
+      });
+    </script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

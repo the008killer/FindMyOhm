@@ -1,0 +1,46 @@
+# ── Node ──────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# ── Environment Variables ─────────────────────────────────────
+.env
+!.env.example
+
+# ── ML Model Weights ──────────────────────────────────────────
+ml/model/*.pt
+ml/model/*.onnx
+ml/model/*.weights
+
+# ── Dataset ───────────────────────────────────────────────────
+ml/dataset/
+
+# ── Uploaded Files ────────────────────────────────────────────
+server/uploads/*
+!server/uploads/.gitkeep
+
+# ── OS Files ──────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+Thumbs.db
+desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Logs ──────────────────────────────────────────────────────
+logs/
+*.log
