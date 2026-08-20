@@ -17,7 +17,7 @@ async function analyzeResistor(filePath) {
 
   try {
     const response = await axios.post(
-      ML_SERVICE_URL + '/analyze',
+      ML_SERVICE_URL + '/detect',
       form,
       {
         headers: {
@@ -52,9 +52,10 @@ async function analyzeResistor(filePath) {
 
 // Delete uploaded file after processing
 function deleteFile(filePath) {
+  if (!filePath) return;
   fs.unlink(filePath, function (err) {
-    if (err) {
-      console.error('[mlService] Could not delete file:', filePath);
+    if (err && err.code !== 'ENOENT') {
+      console.error('[mlService] Could not delete file:', filePath, err.message);
     }
   });
 }

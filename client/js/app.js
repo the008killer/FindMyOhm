@@ -1,7 +1,8 @@
 'use strict';
 
 // ── Constants ────────────────────────────────────────────────
-var API_URL       = '/api/analyze';
+var API_URL = 'http://localhost:3001/api/analyze';
+
 var MAX_FILE_SIZE = 10 * 1024 * 1024;
 var ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -136,20 +137,54 @@ function renderBands(bands){
 
 //render full analysis results
 function renderResult(data){
-    var resistor = data.resistors[0];
+    if (!data){
+        showError('No data returned from ML service.');
+        return;
+    }
+    var resistors = data.resistors || (data.data && data.data.resistors) || [];
+    if (!resistors || resistors.length === 0){
+        showError('No resistors were detected in this image. Try another image with clearer lighting.');
+        return;
+    }
 
-    if (data.annotated_image){
-        annotatedImage.src = 'data:image/jpeg;base64,'+data.annotated_image;
+    var resistor = resistors[0];
+    // Handle annotated image if provided
+    var imageB64 = data.annotated_image || (data.data && data.data.annotated_image);
+    if (imageB64) {
+        annotatedImage.src = 'data:image/jpeg;base64,' + imageB64;
         annotatedImage.style.display = 'block';
     } else {
         annotatedImage.style.display = 'none';
     }
 
-    resistanceValue.textContent = resistor.resistance + ' ' + resistor.unit;
-    toleranceValue.textContent = resistor.tolerance;
-    calculationText.textContent = resistor.calculation;
+    // Adapt to both ML response schemas cleanly
+    var formattedResistance = '';
+    var tolerance = '';
+    var bandList = [];
+    var calcInfo = '';
 
-    renderBands(resistor.bands);
+    if (resistor.calculation && typeof resistor.calculation === 'object') {
+        if (resistor.calculation.error) {
+            showError('Calculation Error: ' + resistor.calculation.error);
+            return;
+        }
+        formattedResistance = resistor.calculation.formatted || (resistor.calculation.ohms + ' Ω');
+        tolerance = resistor.calculation.tolerance || '';
+        bandList = resistor.bands_detected || resistor.calculation.colors || [];
+        calcInfo = 'Direction: ' + (resistor.calculation.direction || 'auto') + ' • Bands: ' + bandList.join(' → ');
+    } else {
+        formattedResistance = (resistor.resistance || '0') + ' ' + (resistor.unit || 'Ω');
+        tolerance = resistor.tolerance || '';
+        bandList = resistor.bands || [];
+        calcInfo = resistor.calculation || '';
+    }
+
+
+    resistanceValue.textContent = formattedResistance;
+    toleranceValue.textContent = tolerance;
+    calculationText.textContent = calcInfo;
+
+    renderBands(bandList);
 
     resultSection.classList.add('visible');
     resultCard.classList.add('visible');
@@ -182,15 +217,25 @@ async function analyzeImage(){
             method : 'POST',
             body : formData
         });
-        var json = await response.json();
+        var rawText = await response.text();
+        var json;
+
+        try {
+            json = JSON.parse(rawText);
+        } catch (e){
+            if (response.status === 405) {
+                throw new Error('405 Method Not Allowed: Open the app at http://localhost:3001 (Node server) instead of Live Server (port 5500).');
+            }
+            throw new Error('Server returned invalid response (HTTP ' + response.status + ').');
+        }
 
         if (!response.ok || !json.success){
-            showError(json.error || 'Analysis failed. Please try again!');
+            showError(json.error || (json.data && json.data.error) || 'Analysis failed. Please try again!');
             return;
         }
         renderResult(json.data);
     } catch (err){
-        showError('Could not reach the server.');
+        showError(err.message || 'Could not reach the server.');
         console.error('Fetch error: ', err);
     } finally {
         setLoading(false);

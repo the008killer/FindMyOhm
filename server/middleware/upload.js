@@ -3,6 +3,7 @@
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
 
 //allowed types
 const ALLOWED_MIME_TYPES = [
@@ -12,6 +13,12 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 const MAX_FILE_SIZE = (parseInt(process.env.MAX_FILE_SIZE_MB) || 10 ) * 1024 * 1024;
+
+// ensure uploads directory exists on disk automatically
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)){
+    fs.mkdirSync(uploadsDir, {recursive: true})
+}
 
 // storage config
 const storage = multer.diskStorage({
