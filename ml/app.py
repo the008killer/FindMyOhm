@@ -19,7 +19,7 @@ app.add_middleware(
 
 resistor_detector = ResistorDetector("./model/best.pt")
 band_detector = BandDetector("./model/band.pt")
-cropper = ResistorCropper()
+cropper = ResistorCropper(padding=0.10)
 decoder = ResistorDecoder()
 
 def bytes_to_cv2(image_bytes:bytes) -> np.ndarray:

@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 class BandDetector:
-    def __init__(self, model_path, confidence=0.5):
+    def __init__(self, model_path, confidence=0.4):
         self.confidence = confidence
         self.model = YOLO(model_path)
 
@@ -30,5 +30,5 @@ class BandDetector:
             )
 
             bands.sort(key=lambda b:b["cx"])
-            return bands
+        return bands
 

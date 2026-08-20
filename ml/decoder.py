@@ -41,7 +41,7 @@ class ResistorDecoder:
 
     @staticmethod
     def format_ohms(ohms):
-        """Converts raw Ohms into formatted string (e.g., 4.70 kΩ)"""
+        """Converts raw Ohms into formatted human-readable string."""
         if ohms >= 1e9:
             return f"{ohms/1e9:.2f} GΩ"
         if ohms >= 1e6:
@@ -50,49 +50,116 @@ class ResistorDecoder:
             return f"{ohms/1e3:.2f} kΩ"
         return f"{ohms:.2f} Ω"
 
-    def decode(self, colors):
+    def _score_sequence(self, colors):
         """
-        Decodes a list of color band strings (4, 5, or 6 bands).
+        Scores how likely a color sequence is physically valid.
+        Higher score = higher probability of correct reading direction.
         """
-        if not colors:
-            return {"error": "No bands detected"}
-
-        colors = [c.lower() for c in colors]
+        score = 0
         n = len(colors)
 
-        # Direction Heuristic: Gold/Silver tolerance band should be at the END.
-        # If it's detected at index 0, reverse the list.
-        if colors[0] in ["gold", "silver"]:
-            colors = colors[::-1]
+        first = colors[0]
+        last = colors[-1]
+
+        # Rule 1: First band CANNOT be Gold, Silver, or Black
+        if first in ["gold", "silver"]:
+            score -= 100  # Impossible
+        if first == "black" and n > 1:
+            score -= 50  # Very rare/invalid
+
+        # Rule 2: Last band SHOULD be a valid tolerance color
+        if last in ["gold", "silver"]:
+            score += 30  # Standard 4-band tolerance
+        elif last == "brown":
+            score += 25  # Standard 5-band 1% tolerance
+        elif last == "red":
+            score += 15  # Standard 2% tolerance
+        elif last in self.TOLERANCE:
+            score += 10
+
+        # Rule 3: Multiplier band (penultimate) validity
+        mult_candidate = colors[-2] if n in [4, 5] else colors[-3]
+        if mult_candidate in self.MULTIPLIER:
+            score += 10
+
+        return score
+
+    def _calculate(self, colors):
+        """Performs raw resistance calculation for a given color list."""
+        n = len(colors)
+        if n == 4:
+            val = (
+                10 * self.DIGIT[colors[0]] + self.DIGIT[colors[1]]
+            ) * self.MULTIPLIER[colors[2]]
+            tol = self.TOLERANCE.get(colors[3], "?")
+        elif n in [5, 6]:
+            val = (
+                100 * self.DIGIT[colors[0]]
+                + 10 * self.DIGIT[colors[1]]
+                + self.DIGIT[colors[2]]
+            ) * self.MULTIPLIER[colors[3]]
+            tol = self.TOLERANCE.get(colors[4], "?")
+        else:
+            raise ValueError(f"Unsupported band count: {n}")
+
+        return val, tol
+
+    def decode(self, raw_colors):
+        """
+        Decodes colors by trying BOTH forward and reversed directions,
+        selecting the sequence that represents a valid resistor code.
+        """
+        if not raw_colors:
+            return {"error": "No color bands provided"}
+
+        # Normalize to lowercase
+        colors_fwd = [c.lower() for c in raw_colors]
+        colors_rev = colors_fwd[::-1]
+
+        n = len(colors_fwd)
+        if n not in [4, 5, 6]:
+            return {
+                "error": f"Expected 4, 5, or 6 bands, detected {n}",
+                "colors_detected": raw_colors,
+            }
+
+        # Score both direction candidates
+        score_fwd = self._score_sequence(colors_fwd)
+        score_rev = self._score_sequence(colors_rev)
+
+        # Select direction with highest score
+        if score_rev > score_fwd:
+            selected_colors = colors_rev
+            direction = "reversed"
+        else:
+            selected_colors = colors_fwd
+            direction = "forward"
 
         try:
-            if n == 4:
-                val = (
-                    10 * self.DIGIT[colors[0]] + self.DIGIT[colors[1]]
-                ) * self.MULTIPLIER[colors[2]]
-                tol = self.TOLERANCE.get(colors[3], "?")
-            elif n in [5, 6]:
-                val = (
-                    100 * self.DIGIT[colors[0]]
-                    + 10 * self.DIGIT[colors[1]]
-                    + self.DIGIT[colors[2]]
-                ) * self.MULTIPLIER[colors[3]]
-                tol = self.TOLERANCE.get(colors[4], "?")
-            else:
-                return {
-                    "error": f"Expected 3-6 bands, got {n}",
-                    "colors": colors,
-                }
-
+            val, tol = self._calculate(selected_colors)
             return {
                 "ohms": val,
                 "formatted": self.format_ohms(val),
                 "tolerance": f"±{tol}%",
-                "colors": colors,
+                "colors": selected_colors,
+                "direction": direction,
             }
-
         except KeyError as e:
-            return {
-                "error": f"Invalid/misplaced color: {e}",
-                "colors": colors,
-            }
+            # If selected direction fails, try fallback direction
+            fallback_colors = (
+                colors_rev if selected_colors == colors_fwd else colors_fwd
+            )
+            try:
+                val, tol = self._calculate(fallback_colors)
+                return {
+                    "ohms": val,
+                    "formatted": self.format_ohms(val),
+                    "tolerance": f"±{tol}%",
+                    "colors": fallback_colors,
+                    "direction": "fallback",
+                }
+            except KeyError:
+                return {
+                    "error": f"Invalid color for position: {e}",
+                    "colors": selected_colors,
+                }
