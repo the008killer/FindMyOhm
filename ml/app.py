@@ -73,6 +73,7 @@ async def detect_resistors(file: UploadFile = File(...)):
 
         # Stage 4: Extract Color List
         color_sequence = [b["color"] for b in bands]
+        band_conf = [b['confidence'] for b in bands]
 
         # Stage 5: Decode Resistance Value
         decoded_result = decoder.decode(color_sequence)
@@ -84,6 +85,7 @@ async def detect_resistors(file: UploadFile = File(...)):
                 "confidence": round(res_conf, 4),
                 "bbox": bbox,
                 "bands_detected": color_sequence,
+                "bands_confidence": band_conf,
                 "calculation": decoded_result,
             }
         )

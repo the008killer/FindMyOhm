@@ -18,7 +18,6 @@ env/
 !.env.example
 
 # ── ML Model Weights ──────────────────────────────────────────
-ml/model/*.pt
 ml/model/*.onnx
 ml/model/*.weights
 
