@@ -1,29 +1,30 @@
 FROM python:3.11-slim
 
-# Set the working directory
 WORKDIR /app
 
-# System dependencies required by OpenCV
+# System libraries
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libgl1 \
-    libglib2.0-dev \
     libsm6 \
     libxext6 \
     libxrender1 \
     libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the requirements file and install dependencies
-COPY ./requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Install CPU-only PyTorch
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cpu
 
+# Install application dependencies
+COPY requirements.txt .
 
-# Copy the rest of your application code
-COPY ./ /app
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set the PORT environment variable to match Render's requirements
-ENV PORT="8080"
+# Copy application
+COPY . .
 
-# Command to run the app, using the specified port
+ENV PORT=8080
+
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8080"]
